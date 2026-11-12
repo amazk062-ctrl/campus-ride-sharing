@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../routes/app_routes.dart';
+import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common_widgets.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -8,256 +13,316 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  String selectedGender = 'Male';
-  String selectedRole = 'Passenger';
+  final _formKey = GlobalKey<FormState>();
 
-  bool hidePassword = true;
-  bool hideConfirmPassword = true;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+
+  String? _gender;
+  String? _role;
+
+  bool _hidePassword = true;
+  bool _hideConfirmPassword = true;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F7FC),
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(
-                Icons.person_add_alt_1,
-                size: 70,
-                color: Color(0xFF2563EB),
-              ),
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
-              const SizedBox(height: 15),
+  void _register() {
+    if (!_formKey.currentState!.validate()) return;
 
-              const Text(
-                'Join Campus Ride!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
-                ),
-              ),
+    final gender = _gender;
+    final role = _role;
 
-              const SizedBox(height: 8),
+    if (gender == null || role == null) {
+      showMessage(context, 'Please select gender and role.');
+      return;
+    }
 
-              const Text(
-                'Create your student account',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
+    final error = AuthService.register(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      gender: gender,
+      role: role,
+      password: _passwordController.text,
+    );
 
-              const SizedBox(height: 30),
+    if (!mounted) return;
 
-              buildLabel('Full Name'),
-              buildField(
-                hint: 'Enter your full name',
-                icon: Icons.person_outline,
-              ),
+    if (error != null) {
+      showMessage(context, error);
+      return;
+    }
 
-              const SizedBox(height: 18),
-
-              buildLabel('University Email'),
-              buildField(
-                hint: 'Enter your university email',
-                icon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
-
-              const SizedBox(height: 18),
-
-              buildLabel('Password'),
-              TextField(
-                obscureText: hidePassword,
-                decoration: InputDecoration(
-                  hintText: 'Create password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      hidePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        hidePassword = !hidePassword;
-                      });
-                    },
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              buildLabel('Confirm Password'),
-              TextField(
-                obscureText: hideConfirmPassword,
-                decoration: InputDecoration(
-                  hintText: 'Confirm your password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      hideConfirmPassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        hideConfirmPassword = !hideConfirmPassword;
-                      });
-                    },
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              buildLabel('Gender'),
-
-              DropdownButtonFormField<String>(
-                value: selectedGender,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.people_outline),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: ['Male', 'Female'].map((gender) {
-                  return DropdownMenuItem(
-                    value: gender,
-                    child: Text(gender),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedGender = value!;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 22),
-
-              buildLabel('Select Your Role'),
-
-              DropdownButtonFormField<String>(
-                value: selectedRole,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.directions_car),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: ['Passenger', 'Driver'].map((role) {
-                  return DropdownMenuItem(
-                    value: role,
-                    child: Text(role),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedRole = value!;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Registration UI completed! Firebase will be connected later.',
-                        ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  'Already have an account? Login',
-                  style: TextStyle(color: Color(0xFF2563EB)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (route) => false,
     );
   }
 
-  Widget buildLabel(String label) {
+  Widget _buildLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         label,
         style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 15,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 
-  Widget buildField({
+  InputDecoration _decoration({
     required String hint,
     required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
+    Widget? suffixIcon,
   }) {
-    return TextField(
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Account'),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.person_add_alt_1,
+                  size: 70,
+                  color: AppColors.navy,
+                ),
+
+                const SizedBox(height: 15),
+
+                const Text(
+                  'Join Campus Ride!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.navy,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  'Create your student account',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.grey),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Full Name
+                _buildLabel('Full Name'),
+
+                TextFormField(
+                  controller: _nameController,
+                  validator: validateRequired,
+                  decoration: _decoration(
+                    hint: 'Enter your full name',
+                    icon: Icons.person_outline,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // University Email
+                _buildLabel('University Email'),
+
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: validateEmail,
+                  decoration: _decoration(
+                    hint: 'Enter your university email',
+                    icon: Icons.email_outlined,
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Password
+                _buildLabel('Password'),
+
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _hidePassword,
+                  validator: validatePassword,
+                  decoration: _decoration(
+                    hint: 'Create password',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _hidePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _hidePassword = !_hidePassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Confirm Password
+                _buildLabel('Confirm Password'),
+
+                TextFormField(
+                  controller: _confirmController,
+                  obscureText: _hideConfirmPassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+
+                    if (value != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
+
+                    return null;
+                  },
+                  decoration: _decoration(
+                    hint: 'Confirm your password',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _hideConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _hideConfirmPassword = !_hideConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // Gender
+                _buildLabel('Gender'),
+
+                DropdownButtonFormField<String>(
+                  value: _gender,
+                  isExpanded: true,
+                  decoration: _decoration(
+                    hint: 'Select your gender',
+                    icon: Icons.people_outline,
+                  ),
+                  items: const ['Female', 'Male'].map((gender) {
+                    return DropdownMenuItem<String>(
+                      value: gender,
+                      child: Text(gender),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select your gender';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      _gender = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 22),
+
+                // Role
+                _buildLabel('Select Your Role'),
+
+                DropdownButtonFormField<String>(
+                  value: _role,
+                  isExpanded: true,
+                  decoration: _decoration(
+                    hint: 'Select your role',
+                    icon: Icons.directions_car_outlined,
+                  ),
+                  items: const ['Passenger', 'Driver'].map((role) {
+                    return DropdownMenuItem<String>(
+                      value: role,
+                      child: Text(role),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select your role';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      _role = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 30),
+
+                // Register Button
+                SizedBox(
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: _register,
+                    child: const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Already have an account? Login',
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
